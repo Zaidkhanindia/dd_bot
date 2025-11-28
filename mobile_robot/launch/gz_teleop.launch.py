@@ -13,8 +13,7 @@ def generate_launch_description():
     # Xacro file path
     xacro_file_path = os.path.join(pkg_path, 'urdf', 'dd_bot.urdf.xacro')
 
-    # -------- Robot Description --------
-    # Use xacro to process the file
+    # Robot Description
     robot_description_raw = xacro.process_file(xacro_file_path).toxml()
     
     # -------- Nodes --------
@@ -53,27 +52,33 @@ def generate_launch_description():
 
     # ROS <-> GZ Bridge
     # This bridge is essential for communication between ROS 2 and Gazebo
-    # It bridges the ROS 2 /cmd_vel topic to the Gazebo topic /model/dd_bot/cmd_vel
-    '''bridge_node = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        arguments=['/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
-        output='screen'
-    )'''
-
+    
     bridge_node = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
         arguments=[
             # Bridge cmd_vel (ROS2 → Gazebo)
-            '/model/dd_bot/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
+            '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
 
             # Bridge odometry (Gazebo → ROS2)
-            '/model/dd_bot/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry',
+            '/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry',
 
             # Bridge clock (Gazebo → ROS2)
-            '/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock'
+            '/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock',
+
+            # Bridge tf G -> ROS2
+            '/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V',
+
+            #Bridge joint_states G -> ROS2
+            '/joint_states@sensor_msgs/msg/JointState@gz.msgs.Model'
         ],
+        output='screen'
+    )
+
+    rviz = Node(
+        package='rviz2',
+        executable='rviz2',
+        #arguments=['-d', os.path.join(pkg_path, 'rviz', 'dd_bot.rviz')],
         output='screen'
     )
 
@@ -82,5 +87,6 @@ def generate_launch_description():
         start_gazebo_client_cmd,
         robot_state_publisher_node,
         spawn_entity_node,
-        bridge_node
+        bridge_node,
+        rviz
     ])

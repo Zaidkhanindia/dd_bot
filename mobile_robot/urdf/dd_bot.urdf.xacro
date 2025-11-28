@@ -36,6 +36,8 @@
     </inertial>
   </link>
 
+  <link name="base_footprint"></link>
+
   <!-- Right Wheel Link -->
   <link name="right_wheel_link">
     <visual>
@@ -101,6 +103,12 @@
       </inertial>
   </link>
 
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0.0 0.0 0.1" rpy="0.0 0.0 0.0"/>
+  </joint>
+
   <!-- Right Wheel Joint -->
   <joint name="right_wheel_joint" type="continuous">
     <parent link="base_link"/>
@@ -124,47 +132,35 @@
       <origin xyz="0.25 0 -${chassis_height/2 - caster_radius}"/>
   </joint>
 
-  <!--<gazebo>
-    <plugin
-      filename="gz::sim::systems::DiffDrive"
-      name="gz::sim::systems::DiffDrive">
-      <left_joint>left_wheel_joint</left_joint>
-      <right_joint>right_wheel_joint</right_joint>
-      <wheel_separation>${wheel_separation}</wheel_separation>
-      <wheel_radius>${wheel_radius}</wheel_radius>
-       This is the Gazebo Transport topic the plugin will listen to
-      <topic>/model/dd_bot/cmd_vel</topic>
-    </plugin>
-  </gazebo> -->
-
   <!-- Gazebo DiffDrive plugin -->
   <gazebo>
     <plugin
       filename="gz-sim-diff-drive-system"
       name="gz::sim::systems::DiffDrive">
-
       <!-- Wheel joint names -->
       <left_joint>left_wheel_joint</left_joint>
       <right_joint>right_wheel_joint</right_joint>
-
       <!-- Wheel separation & radius -->
       <wheel_separation>${wheel_separation}</wheel_separation>
       <wheel_radius>${wheel_radius}</wheel_radius>
-
       <!-- Command topic (Gazebo Transport) -->
-      <topic>/model/dd_bot/cmd_vel</topic>
-
-      <!-- Odometry output topic -->
-      <odometry_topic>/model/dd_bot/odometry</odometry_topic>
-
+      <topic>/cmd_vel</topic>
+      <tf_topic>/tf</tf_topic>
       <!-- Frame names -->
-      <odom_frame>odom</odom_frame>
-      <robot_base_frame>base_link</robot_base_frame>
-
+      <frame_id>/odom</frame_id>
+      <child_frame_id>base_footprint</child_frame_id>
       <!-- Enable odometry publication -->
       <publish_odom>true</publish_odom>
-      <publish_tf>false</publish_tf>
-
+      <publish_odom_tf>true</publish_odom_tf>
+      <publish_wheel_tf>true</publish_wheel_tf>   
+      <publish_wheel_joints>true</publish_wheel_joints>
+    </plugin>
+    <!--Very Imp plugin for publishing joint states of robot on robot description topic-->
+    <plugin filename="gz-sim-joint-state-publisher-system"
+        name="gz::sim::systems::JointStatePublisher">
+        <topic>/joint_states</topic>
+        <joint_name>right_wheel_joint</joint_name>
+        <joint_name>left_wheel_joint</joint_name>
     </plugin>
   </gazebo>
 
